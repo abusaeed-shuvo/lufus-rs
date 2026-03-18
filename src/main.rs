@@ -1,42 +1,62 @@
-mod gui;
 mod app;
+mod models;
+mod platform;
+mod services;
+mod tui;
+mod utils;
 
-use eframe::egui;
-use crate::app::state::AppState;
+use std::{io, time::Duration};
 
-fn main() -> eframe::Result<()> {
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title("Lufus-rs"),
-        ..Default::default()
-    };
+use crossterm::{
+    event::{self, Event, KeyCode},
+    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+};
 
-    eframe::run_native(
-        "Lufus-rs",
-        options,
-        Box::new(|_cc| Ok(Box::new(RufusApp::default()))),
-    )
-}
+use ratatui::{Terminal, backend::CrosstermBackend};
 
-struct RufusApp {
-    state: AppState,
-}
+use tui::{app::App, ui};
 
-impl Default for RufusApp {
-    fn default() -> Self {
-        Self {
-            state: AppState::default(),
+fn main() -> Result<(), io::Error> {
+    enable_raw_mode()?;
+
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    let mut app = App::new();
+
+    loop {
+        terminal.draw(|f| ui::draw(f, &mut app))?;
+
+        if event::poll(Duration::from_millis(100))? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Down => app.next(),
+                    KeyCode::Up => app.previous(),
+                    KeyCode::Char('s') => {
+                        app.flashing = true;
+                        app.progress = 0;
+                    }
+                    KeyCode::Char('o') => {
+                        app.pick_iso();
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        if app.flashing && app.progress < 100 {
+            app.progress += 1;
         }
     }
-}
 
-impl eframe::App for RufusApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            gui::device_section(ui, &mut self.state);
-            gui::iso_section(ui, &mut self.state);
-            gui::options_section(ui);
-            gui::progress_section(ui, &mut self.state);
-        });
-    }
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
+
+    Ok(())
 }
