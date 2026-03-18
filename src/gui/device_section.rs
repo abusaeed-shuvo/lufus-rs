@@ -1,20 +1,15 @@
-use iced::{
-    widget::{pick_list, row,text},
-    Element,Length
-};
+use eframe::egui::{ComboBox, Ui};
+use crate::app::state::AppState;
 
-use crate::app::{state::AppState, message::Message};
-
-pub fn device_selection(state:&AppState) -> Element<Message> {
-    row![
-        text("Device").width(Length::FillPortion(1)),
-        pick_list(
-            &state.devices,
-            state.selected_device.clone(),
-            Message::DeviceSelected
-        )
-        .width(Length::FillPortion(3))
-    ]
-        .spacing(10)
-        .into()
+pub fn device_section(ui: &mut Ui, state: &mut AppState) {
+    ui.horizontal(|ui| {
+        ui.label("Device:");
+        ComboBox::from_label("")
+            .selected_text(state.selected_device.clone().unwrap_or_default())
+            .show_ui(ui, |ui| {
+                for d in &state.devices {
+                    ui.selectable_value(&mut state.selected_device, Some(d.clone()), d);
+                }
+            });
+    });
 }

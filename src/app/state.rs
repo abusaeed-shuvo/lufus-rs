@@ -1,7 +1,7 @@
-use iced::wgpu::Device;
-
+#[derive(Default)]
 pub struct AppState {
-    pub selected_device: Option<Device>,
-    pub iso:Option<String>,
-    pub progress:f32,
+    pub devices: Vec<String>,
+    pub selected_device: Option<String>,
+    pub iso_path: String,
+    pub progress: f32,
 }

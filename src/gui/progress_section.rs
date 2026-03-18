@@ -1,21 +1,16 @@
-use iced::{
-    alignment,
-    widget::{button, column, progress_bar, row},
-    Element,
-};
+use eframe::egui::{ProgressBar, Ui, Button};
+use crate::app::state::AppState;
 
-use crate::app::{state::AppState, message::Message};
-
-pub fn progress_section(state: &AppState) -> Element<Message> {
-    column![
-        progress_bar(0.0..=1.0, state.progress),
-        row![
-            button("START").on_press(Message::StartFlash),
-            button("CLOSE")
-        ]
-        .spacing(20)
-        .align_y(alignment::Alignment::Center)
-    ]
-        .spacing(15)
-        .into()
+pub fn progress_section(ui: &mut Ui, state: &mut AppState) {
+    ui.vertical(|ui| {
+        ui.add(ProgressBar::new(state.progress).text(format!("{:.0}%", state.progress*100.0)));
+        ui.horizontal(|ui| {
+            if ui.add(Button::new("START")).clicked() {
+                // handle flashing
+            }
+            if ui.add(Button::new("CLOSE")).clicked() {
+                // close app
+            }
+        });
+    });
 }
